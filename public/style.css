@@ -1,0 +1,138 @@
+body {
+  font-family: "Segoe UI", sans-serif;
+  background: linear-gradient(135deg, #005bea, #00c6fb);
+  color: #fff;
+  margin: 0;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.hidden { display: none; }
+
+.card {
+  background: rgba(255, 255, 255, 0.1);
+  padding: 30px;
+  border-radius: 16px;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+  width: 320px;
+  text-align: center;
+}
+
+.card input, button {
+  width: 100%;
+  margin-top: 10px;
+  padding: 10px;
+  border: none;
+  border-radius: 8px;
+}
+
+button {
+  background-color: #007bff;
+  color: white;
+  cursor: pointer;
+}
+
+button:hover { background-color: #005ecb; }
+
+#chatContainer {
+  width: 100%;
+  max-width: 600px;
+  height: 90vh;
+  display: flex;
+  flex-direction: column;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.chatHeader {
+  background: rgba(0, 0, 0, 0.2);
+  padding: 15px;
+  text-align: center;
+}
+
+#messages {
+  flex: 1;
+  padding: 15px;
+  overflow-y: auto;
+}
+
+.message {
+  display: flex;
+  align-items: flex-end;
+  margin: 10px 0;
+}
+
+.message img {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  margin: 0 10px;
+}
+
+.message-content {
+  background: rgba(0, 123, 255, 0.2);
+  padding: 10px 15px;
+  border-radius: 16px;
+  max-width: 60%;
+}
+
+.self { 
+  flex-direction: row-reverse; 
+}
+
+.self .message-content { 
+  background: #007bff; 
+}
+
+#chatForm {
+  display: flex;
+  padding: 10px;
+  background: rgba(0,0,0,0.1);
+}
+
+#messageInput {
+  flex: 1;
+  padding: 12px 15px;
+  border-radius: 25px;
+  border: none;
+  margin-right: 10px;
+  font-size: 16px;
+}
+
+#chatForm button {
+  padding: 10px 15px;
+  border-radius: 20px;
+  border: none;
+  background-color: #007bff;
+  color: white;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+#chatForm button:hover {
+  background-color: #005ecb;
+}
+
+.chatActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 5px;
+}
+
+.chatActions button {
+  padding: 5px 12px;
+  border-radius: 16px;
+  border: none;
+  background-color: rgba(255,255,255,0.2);
+  color: #fff;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.chatActions button:hover {
+  background-color: rgba(255,255,255,0.4);
+}

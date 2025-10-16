@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Chat Azul</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- LOGIN / CADASTRO -->
+  <div id="loginContainer" class="card">
+    <h2>💬 Login</h2>
+    <form id="loginForm" action="/login" method="POST">
+      <input type="text" name="username" placeholder="Usuário" required>
+      <input type="password" name="password" placeholder="Senha" required>
+      <button type="submit">Entrar</button>
+    </form>
+
+    <hr>
+    <h3>Ou cadastre-se:</h3>
+    <form id="registerForm" action="/register" method="POST" enctype="multipart/form-data">
+      <input type="text" name="username" placeholder="Novo usuário" required>
+      <input type="password" name="password" placeholder="Nova senha" required>
+      <label>Cor do tema:</label>
+      <input type="color" name="color" value="#007BFF">
+      <label>Avatar:</label>
+      <input type="file" name="avatar" accept="image/*">
+      <button type="submit">Cadastrar</button>
+    </form>
+  </div>
+
+  <!-- CHAT -->
+  <div id="chatContainer" class="hidden">
+    <div class="chatHeader">
+      <h2>Chat Azul 💙</h2>
+      <span id="currentUser"></span>
+      <div class="chatActions">
+        <button id="editProfile">Editar Perfil</button>
+        <button id="logout">Sair</button>
+      </div>
+    </div>
+    <div id="messages"></div>
+    <form id="chatForm">
+      <input id="messageInput" type="text" placeholder="Digite sua mensagem...">
+      <button type="submit">Enviar</button>
+    </form>
+  </div>
+
+  <audio id="msgSound" src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_d001e3b37a.mp3"></audio>
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
