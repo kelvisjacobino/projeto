@@ -10,13 +10,14 @@ const sqlite3 = require('sqlite3').verbose();
 const PORT = 8080;
 
 // ---------------------------
-// CONFIGURAÇÃO BANCO DE DADOS
+// BANCO DE DADOS
 // ---------------------------
 const db = new sqlite3.Database('./chat.db', err => {
-  if (err) console.error('Erro ao abrir o banco', err);
-  else console.log('Banco de dados aberto com sucesso.');
+  if (err) console.error('❌ Erro ao abrir o banco:', err);
+  else console.log('✅ Banco de dados aberto com sucesso.');
 });
 
+// Tabela de usuários
 db.run(`CREATE TABLE IF NOT EXISTS users (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   username TEXT UNIQUE,
@@ -24,12 +25,12 @@ db.run(`CREATE TABLE IF NOT EXISTS users (
   color TEXT,
   avatar TEXT
 )`, err => {
-  if (err) console.error('Erro ao criar tabela:', err);
-  else console.log('Tabela users pronta.');
+  if (err) console.error('❌ Erro ao criar tabela:', err);
+  else console.log('✅ Tabela users pronta.');
 });
 
 // ---------------------------
-// CONFIGURAÇÕES E MIDDLEWARES
+// MIDDLEWARES
 // ---------------------------
 const publicDir = path.join(__dirname, 'public');
 const uploadDir = path.join(__dirname, 'uploads');
@@ -38,11 +39,10 @@ app.use(express.static(publicDir));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
-// Cria pasta uploads se não existir
 if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
 
 // ---------------------------
-// MULTER PARA UPLOAD DE AVATAR
+// MULTER PARA AVATAR
 // ---------------------------
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, uploadDir),
@@ -59,7 +59,7 @@ const upload = multer({
 });
 
 // ---------------------------
-// ROTA DE CADASTRO
+// ROTAS DE CADASTRO E LOGIN
 // ---------------------------
 app.post('/register', upload.single('avatar'), (req, res) => {
   const { username, password, color } = req.body;
@@ -79,9 +79,6 @@ app.post('/register', upload.single('avatar'), (req, res) => {
   stmt.finalize();
 });
 
-// ---------------------------
-// ROTA DE LOGIN
-// ---------------------------
 app.post('/login', (req, res) => {
   const { username, password } = req.body;
 
@@ -94,36 +91,30 @@ app.post('/login', (req, res) => {
   });
 });
 
-// ---------------------------
-// RETORNAR DADOS DO USUÁRIO
-// ---------------------------
 app.get('/user/:username', (req, res) => {
   const username = req.params.username;
 
   db.get(`SELECT * FROM users WHERE username = ?`, [username], (err, row) => {
     if (err || !row) return res.json({ avatar: '/uploads/default.png', color: '#007BFF' });
-
     res.json({ avatar: row.avatar || '/uploads/default.png', color: row.color || '#007BFF' });
   });
 });
 
-// ---------------------------
-// SERVIR UPLOADS
-// ---------------------------
 app.use('/uploads', express.static(uploadDir));
 
 // ---------------------------
-// SOCKET.IO
+// SOCKET.IO COM LOGS
 // ---------------------------
 io.on('connection', socket => {
-  console.log('🟢 Novo cliente conectado.');
+  console.log(`🟢 Novo cliente conectado: ${socket.id}`);
 
   socket.on('sendMessage', data => {
-    io.emit('receiveMessage', data);
+    console.log(`💬 Mensagem de ${data.user}: ${data.text}`);
+    io.emit('receiveMessage', data); // retransmitir para todos
   });
 
   socket.on('disconnect', () => {
-    console.log('🔴 Cliente desconectado.');
+    console.log(`🔴 Cliente desconectado: ${socket.id}`);
   });
 });
 
