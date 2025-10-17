@@ -1,9 +1,12 @@
-// ----- LOGIN / CADASTRO DINÂMICO -----
+// ---------------------------
+// LOGIN / CADASTRO DINÂMICO
+// ---------------------------
 const loginContainer = document.getElementById("loginContainer");
 const registerContainer = document.getElementById("registerContainer");
 const goToRegister = document.getElementById("goToRegister");
 const goToLogin = document.getElementById("goToLogin");
 
+// Alternar telas
 goToRegister.addEventListener("click", e => {
   e.preventDefault();
   loginContainer.classList.add("hidden");
@@ -16,7 +19,9 @@ goToLogin.addEventListener("click", e => {
   loginContainer.classList.remove("hidden");
 });
 
-// Cadastro
+// ---------------------------
+// CADASTRO
+// ---------------------------
 async function registerUser() {
   const username = document.getElementById("reg-username").value.trim();
   const password = document.getElementById("reg-password").value.trim();
@@ -45,7 +50,9 @@ async function registerUser() {
   }
 }
 
-// Login
+// ---------------------------
+// LOGIN
+// ---------------------------
 async function loginUser() {
   const username = document.getElementById("login-username").value.trim();
   const password = document.getElementById("login-password").value.trim();
@@ -58,8 +65,8 @@ async function loginUser() {
 
   if (res.ok) {
     const data = await res.json();
-    localStorage.setItem("user", JSON.stringify({ username, ...data }));
-    showChat(username);
+    localStorage.setItem("user", JSON.stringify({ username: data.username }));
+    showChat(data.username);
   } else {
     const text = await res.text();
     alert(text);
@@ -77,7 +84,9 @@ document.getElementById("loginForm").addEventListener("submit", e => {
   loginUser();
 });
 
-// ----- CHAT SOCKET.IO -----
+// ---------------------------
+// CHAT SOCKET.IO
+// ---------------------------
 const socket = io();
 const msgSound = document.getElementById("msgSound");
 const chatContainer = document.getElementById("chatContainer");
@@ -117,10 +126,11 @@ chatForm.addEventListener("submit", e => {
   }
 });
 
-// Receber mensagens
+// Receber mensagens (apenas 1 listener, sem duplicação)
 socket.on("receiveMessage", data => {
   const div = document.createElement("div");
   div.classList.add("message");
+
   const userData = JSON.parse(localStorage.getItem("user") || '{}');
   if (data.user === userData.username) div.classList.add("self");
 
@@ -128,49 +138,28 @@ socket.on("receiveMessage", data => {
     <img src="${data.avatar || '/uploads/default.png'}" alt="avatar">
     <div class="message-content"><strong>${data.user}:</strong> ${data.text}</div>
   `;
-  messagesDiv.appendChild(div);
-  messagesDiv.scrollTop = messagesDiv.scrollHeight;
-  msgSound.play();
-});
 
-// Logout
-logoutBtn.addEventListener("click", () => {
-  localStorage.removeItem("user");
-  chatContainer.classList.add("hidden");
-  loginContainer.classList.remove("hidden");
-});
-
-// Editar perfil
-editProfileBtn.addEventListener("click", () => {
-  chatContainer.classList.add("hidden");
-  loginContainer.classList.remove("hidden");
-});
-
-goToRegister.addEventListener("click", e => {
-  e.preventDefault();
-  loginContainer.classList.add("hidden");
-  setTimeout(() => registerContainer.classList.remove("hidden"), 200);
-});
-
-goToLogin.addEventListener("click", e => {
-  e.preventDefault();
-  registerContainer.classList.add("hidden");
-  setTimeout(() => loginContainer.classList.remove("hidden"), 200);
-});
-socket.on("receiveMessage", data => {
-  const div = document.createElement("div");
-  div.classList.add("message");
-  const userData = JSON.parse(localStorage.getItem("user") || '{}');
-  if (data.user === userData.username) div.classList.add("self");
-
-  div.innerHTML = `
-    <img src="${data.avatar || '/uploads/default.png'}" alt="avatar">
-    <div class="message-content"><strong>${data.user}:</strong> ${data.text}</div>
-  `;
   messagesDiv.appendChild(div);
   messagesDiv.scrollTop = messagesDiv.scrollHeight;
 
   // Forçar reflow para reiniciar animação se necessário
   void div.offsetWidth;
   msgSound.play();
+});
+
+// ---------------------------
+// LOGOUT
+// ---------------------------
+logoutBtn.addEventListener("click", () => {
+  localStorage.removeItem("user");
+  chatContainer.classList.add("hidden");
+  loginContainer.classList.remove("hidden");
+});
+
+// ---------------------------
+// EDITAR PERFIL
+// ---------------------------
+editProfileBtn.addEventListener("click", () => {
+  chatContainer.classList.add("hidden");
+  loginContainer.classList.remove("hidden");
 });

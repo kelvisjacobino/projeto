@@ -5,21 +5,47 @@ const io = require('socket.io')(http);
 const fs = require('fs');
 const multer = require('multer');
 const path = require('path');
+const sqlite3 = require('sqlite3').verbose();
 
 const PORT = 8080;
 
-// Middleware
-app.use(express.static(path.join(__dirname, 'public')));
+// ---------------------------
+// CONFIGURAÇÃO BANCO DE DADOS
+// ---------------------------
+const db = new sqlite3.Database('./chat.db', err => {
+  if (err) console.error('Erro ao abrir o banco', err);
+  else console.log('Banco de dados aberto com sucesso.');
+});
+
+db.run(`CREATE TABLE IF NOT EXISTS users (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  username TEXT UNIQUE,
+  password TEXT,
+  color TEXT,
+  avatar TEXT
+)`, err => {
+  if (err) console.error('Erro ao criar tabela:', err);
+  else console.log('Tabela users pronta.');
+});
+
+// ---------------------------
+// CONFIGURAÇÕES E MIDDLEWARES
+// ---------------------------
+const publicDir = path.join(__dirname, 'public');
+const uploadDir = path.join(__dirname, 'uploads');
+
+app.use(express.static(publicDir));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
-// Pasta de uploads
-const uploadDir = path.join(__dirname, 'uploads');
-if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir);
+// Cria pasta uploads se não existir
+if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
 
-// Configuração do Multer
+// ---------------------------
+// MULTER PARA UPLOAD DE AVATAR
+// ---------------------------
 const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, 'uploads/'),
+  destination: (req, file, cb) => cb(null, uploadDir),
   filename: (req, file, cb) => cb(null, Date.now() + path.extname(file.originalname))
 });
 
@@ -27,68 +53,86 @@ const upload = multer({
   storage,
   fileFilter: (req, file, cb) => {
     const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/gif'];
-    if (allowedTypes.includes(file.mimetype)) {
-      cb(null, true);
-    } else {
-      cb(new Error('Apenas arquivos PNG, JPG, JPEG ou GIF são permitidos.'));
-    }
+    if (allowedTypes.includes(file.mimetype)) cb(null, true);
+    else cb(new Error('Apenas PNG, JPG, JPEG ou GIF são permitidos.'));
   }
 });
 
-// Cadastro
+// ---------------------------
+// ROTA DE CADASTRO
+// ---------------------------
 app.post('/register', upload.single('avatar'), (req, res) => {
-  console.log('Arquivo enviado:', req.file); // DEBUG
   const { username, password, color } = req.body;
   const avatar = req.file ? `/uploads/${req.file.filename}` : '/uploads/default.png';
 
   if (!username || !password) return res.status(400).send('Usuário e senha obrigatórios');
 
-  const userLine = `${username};${password};${color};${avatar}\n`;
-  fs.appendFileSync('users.txt', userLine);
-  res.redirect('/');
+  const stmt = db.prepare(`INSERT INTO users (username, password, color, avatar) VALUES (?, ?, ?, ?)`);
+  stmt.run(username, password, color, avatar, function(err) {
+    if (err) {
+      if (err.code === 'SQLITE_CONSTRAINT') return res.status(400).send('Usuário já existe.');
+      return res.status(500).send('Erro ao cadastrar usuário.');
+    }
+    console.log(`✅ Usuário cadastrado: ${username}`);
+    res.send('OK');
+  });
+  stmt.finalize();
 });
 
-// Login
+// ---------------------------
+// ROTA DE LOGIN
+// ---------------------------
 app.post('/login', (req, res) => {
   const { username, password } = req.body;
-  if (!fs.existsSync('users.txt')) return res.status(401).send('Sem usuários cadastrados.');
 
-  const users = fs.readFileSync('users.txt', 'utf8').split('\n');
-  const user = users.find(line => {
-    const [u, p] = line.split(';');
-    return u === username && p === password;
+  db.get(`SELECT * FROM users WHERE username = ? AND password = ?`, [username, password], (err, row) => {
+    if (err) return res.status(500).send('Erro no login');
+    if (!row) return res.status(401).send('Usuário ou senha incorretos');
+
+    console.log(`🔓 Usuário logado: ${username}`);
+    res.json({ success: true, username: row.username });
   });
-
-  if (user) res.redirect(`/?user=${encodeURIComponent(username)}`);
-  else res.status(401).send('Usuário ou senha incorretos.');
 });
 
-// Retornar dados do usuário
+// ---------------------------
+// RETORNAR DADOS DO USUÁRIO
+// ---------------------------
 app.get('/user/:username', (req, res) => {
   const username = req.params.username;
-  if (!fs.existsSync('users.txt')) return res.json({ avatar: '/uploads/default.png', color: '#007BFF' });
 
-  const users = fs.readFileSync('users.txt', 'utf8').split('\n');
-  const user = users.find(line => line.startsWith(username + ';'));
+  db.get(`SELECT * FROM users WHERE username = ?`, [username], (err, row) => {
+    if (err || !row) return res.json({ avatar: '/uploads/default.png', color: '#007BFF' });
 
-  if (user) {
-    const [, , color, avatar] = user.split(';');
-    res.json({ avatar: avatar || '/uploads/default.png', color });
-  } else {
-    res.json({ avatar: '/uploads/default.png', color: '#007BFF' });
-  }
+    res.json({ avatar: row.avatar || '/uploads/default.png', color: row.color || '#007BFF' });
+  });
 });
 
-// Servir uploads
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+// ---------------------------
+// SERVIR UPLOADS
+// ---------------------------
+app.use('/uploads', express.static(uploadDir));
 
-// WebSocket
+// ---------------------------
+// SOCKET.IO
+// ---------------------------
 io.on('connection', socket => {
+  console.log('🟢 Novo cliente conectado.');
+
   socket.on('sendMessage', data => {
     io.emit('receiveMessage', data);
   });
+
+  socket.on('disconnect', () => {
+    console.log('🔴 Cliente desconectado.');
+  });
 });
 
+// ---------------------------
+// INICIAR SERVIDOR
+// ---------------------------
 http.listen(PORT, () => {
-  console.log(`💬 Servidor rodando em http://191.223.250.194:${PORT}`);
+  console.log(`💬 Servidor rodando em http://localhost:${PORT}`);
+}).on('error', err => {
+  if (err.code === 'EADDRINUSE') console.error(`❌ Porta ${PORT} já está em uso.`);
+  else console.error(err);
 });
