@@ -2,30 +2,34 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <title>Chat Azul</title>
+  <title>Chat Azul 💬</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <!-- LOGIN / CADASTRO -->
+  <!-- LOGIN -->
   <div id="loginContainer" class="card">
     <h2>💬 Login</h2>
-    <form id="loginForm" action="/login" method="POST">
-      <input type="text" name="username" placeholder="Usuário" required>
-      <input type="password" name="password" placeholder="Senha" required>
+    <form id="loginForm">
+      <input id="login-username" type="text" name="username" placeholder="Usuário" required>
+      <input id="login-password" type="password" name="password" placeholder="Senha" required>
       <button type="submit">Entrar</button>
     </form>
+    <p>Não tem conta? <a href="#" id="goToRegister">Cadastre-se</a></p>
+  </div>
 
-    <hr>
-    <h3>Ou cadastre-se:</h3>
-    <form id="registerForm" action="/register" method="POST" enctype="multipart/form-data">
-      <input type="text" name="username" placeholder="Novo usuário" required>
-      <input type="password" name="password" placeholder="Nova senha" required>
+  <!-- CADASTRO -->
+  <div id="registerContainer" class="card hidden">
+    <h2>📝 Cadastro</h2>
+    <form id="registerForm" enctype="multipart/form-data">
+      <input id="reg-username" type="text" name="username" placeholder="Novo usuário" required>
+      <input id="reg-password" type="password" name="password" placeholder="Nova senha" required>
       <label>Cor do tema:</label>
-      <input type="color" name="color" value="#007BFF">
+      <input id="reg-color" type="color" name="color" value="#007BFF">
       <label>Avatar:</label>
-      <input type="file" name="avatar" accept="image/*">
+      <input id="reg-avatar" type="file" name="avatar" accept="image/*">
       <button type="submit">Cadastrar</button>
     </form>
+    <p>Já tem conta? <a href="#" id="goToLogin">Entrar</a></p>
   </div>
 
   <!-- CHAT -->
